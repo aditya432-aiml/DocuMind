@@ -396,24 +396,149 @@ export function ChatApp({ user }: ChatAppProps) {
 
   function renderText(text: string) {
     let html = ''
-    text.split('\n').forEach((line) => {
+    let inTable = false
+    let tableHeaders: string[] = []
+    let tableRows: string[][] = []
+
+    const flushTable = () => {
+      if (tableHeaders.length > 0 || tableRows.length > 0) {
+        html += '<div class="ai-table-container"><table class="ai-table">'
+        if (tableHeaders.length > 0) {
+          html += '<thead><tr>'
+          tableHeaders.forEach((h) => {
+            html += `<th>${h}</th>`
+          })
+          html += '</tr></thead>'
+        }
+        if (tableRows.length > 0) {
+          html += '<tbody>'
+          tableRows.forEach((row) => {
+            html += '<tr>'
+            row.forEach((cell) => {
+              html += `<td>${cell}</td>`
+            })
+            html += '</tr>'
+          })
+          html += '</tbody>'
+        }
+        html += '</table></div>'
+        tableHeaders = []
+        tableRows = []
+      }
+      inTable = false
+    }
+
+    const lines = text.split('\n')
+    for (let i = 0; i < lines.length; i++) {
+      const line = lines[i]
+      const trimmed = line.trim()
+
+      // Detect table line (e.g. | Role | Org | Duration |)
+      if (trimmed.startsWith('|') && trimmed.endsWith('|')) {
+        const cells = trimmed
+          .split('|')
+          .map((c) => c.trim())
+          .filter((_, idx, arr) => idx > 0 && idx < arr.length - 1)
+
+        // Check if separator line (e.g. |---|---|)
+        const isSeparator = cells.length > 0 && cells.every((c) => /^:?-+:?$/.test(c))
+        if (isSeparator) {
+          continue
+        }
+
+        const formattedCells = cells.map((c) =>
+          c
+            .replace(/&/g, '&amp;')
+            .replace(/</g, '&lt;')
+            .replace(/>/g, '&gt;')
+            .replace(/"/g, '&quot;')
+            .replace(/'/g, '&#039;')
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>'),
+        )
+
+        if (!inTable) {
+          inTable = true
+          tableHeaders = formattedCells
+        } else {
+          tableRows.push(formattedCells)
+        }
+        continue
+      } else {
+        if (inTable) {
+          flushTable()
+        }
+      }
+
+      // Horizontal Rule
+      if (trimmed === '---') {
+        html += '<hr class="ai-hr" />'
+        continue
+      }
+
+      // Headers (H1 - H4)
+      const headerMatch = trimmed.match(/^(#{1,4})\s+(.*)/)
+      if (headerMatch) {
+        const level = headerMatch[1].length
+        const body = headerMatch[2]
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;')
+          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        html += `<h${level} class="ai-header">${body}</h${level}>`
+        continue
+      }
+
+      // Numbered list item
+      const numListMatch = trimmed.match(/^(\d+)\.\s+(.*)/)
+      if (numListMatch) {
+        const body = numListMatch[2]
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;')
+          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        html += `<div class="ai-list-item"><span class="ai-list-num">${numListMatch[1]}.</span><span>${body}</span></div>`
+        continue
+      }
+
+      // Bullet list item (supports *, -, or bullet)
+      const bulletListMatch = trimmed.match(/^([*\-•])\s+(.*)/)
+      if (bulletListMatch) {
+        const body = bulletListMatch[2]
+          .replace(/&/g, '&amp;')
+          .replace(/</g, '&lt;')
+          .replace(/>/g, '&gt;')
+          .replace(/"/g, '&quot;')
+          .replace(/'/g, '&#039;')
+          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        html += `<div class="ai-list-item"><span class="ai-list-bullet">•</span><span>${body}</span></div>`
+        continue
+      }
+
+      // Empty line
+      if (trimmed === '') {
+        html += '<div style="height:6px"></div>'
+        continue
+      }
+
+      // Regular paragraph
       const escapedLine = line
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#039;')
+      const formattedLine = escapedLine.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      html += `<div class="ai-paragraph">${formattedLine}</div>`
+    }
 
-      const listMatch = escapedLine.match(/^(\d+)\.\s(.*)/)
-      if (listMatch) {
-        const body = listMatch[2].replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-        html += `<div class="ai-list-item"><span class="ai-list-num">${listMatch[1]}.</span><span>${body}</span></div>`
-      } else if (line.trim() === '') {
-        html += '<div style="height:6px"></div>'
-      } else {
-        html += '<span>' + escapedLine.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>') + '</span>'
-      }
-    })
+    if (inTable) {
+      flushTable()
+    }
+
     return html
   }
 
