@@ -48,17 +48,40 @@ DocuMind is engineered from the ground up to prevent common LLM-app vulnerabilit
 
 ## 🚀 Quick Start (Running the Entire Project)
 
-### Prerequisites
+The recommended way to run the entire DocuMind application is using **Docker Compose**. Alternatively, you can build and run each service locally.
+
+### Prerequisites (For Both Methods)
+- **Local LLM Runner**: Make sure your local engine (e.g., Ollama or LocalAI) is running on the host machine at `http://localhost:12434/engines/v1` with the model `ai/ministral3:3B-Q4_K_M` loaded.
+
+---
+
+### Method 1: Running with Docker Compose 🐳 (Recommended)
+
+To build and start both the frontend and backend using Docker:
+
+```bash
+docker compose up --build
+```
+
+This will automatically:
+1. Build the FastAPI backend container (exposing port `8000`).
+2. Build the Next.js frontend container (exposing port `3000`).
+3. Set up persistent Docker volumes for the SQLite credentials database, ChromaDB vector database, and temporary upload folder so that no data is lost when containers restart.
+
+Once finished, open [http://localhost:3000](http://localhost:3000) to view the application.
+
+---
+
+### Method 2: Manual Local Installation (Alternative)
+
+If you prefer to run the services without Docker, make sure you have the following additional prerequisites installed:
 1. **Python 3.13+** (managed with [uv](https://github.com/astral-sh/uv) or pip)
 2. **Node.js 18+** & **npm**
 3. **Tesseract OCR** (optional, recommended for scanned/image-based PDFs)
    - *macOS*: `brew install tesseract`
    - *Ubuntu*: `sudo apt-get install tesseract-ocr`
-4. **Local LLM Runner**: Make sure your local engine (e.g., LocalAI or Ollama) is running at `http://localhost:12434/engines/v1` with the model `ai/ministral3:3B-Q4_K_M` loaded.
 
----
-
-### Step 1: Start the Backend Server
+#### Step 1: Start the Backend Server
 
 1. Navigate to the `backend/` directory:
    ```bash
@@ -87,9 +110,7 @@ DocuMind is engineered from the ground up to prevent common LLM-app vulnerabilit
 
 The backend API will run at [http://localhost:8000](http://localhost:8000).
 
----
-
-### Step 2: Start the Frontend Application
+#### Step 2: Start the Frontend Application
 
 1. Open a new terminal window and navigate to the `frontend/` directory:
    ```bash
@@ -106,23 +127,6 @@ The backend API will run at [http://localhost:8000](http://localhost:8000).
    ```
 
 The frontend application will be running at [http://localhost:3000](http://localhost:3000).
-
----
-
-### Alternative: Run with Docker Compose 🐳
-
-If you prefer to run both the frontend and backend using Docker (without needing to set up Python and Node environments manually), you can run:
-
-```bash
-docker compose up --build
-```
-
-This will automatically:
-1. Build the FastAPI Python container (running on port `8000`).
-2. Build the Next.js frontend container (running on port `3000`).
-3. Set up persistent Docker volumes for the SQLite user auth database, ChromaDB vector database, and temporary upload folder to ensure data is not lost on restart.
-
-*Note: Ensure your local LLM engine (e.g., Ollama or LocalAI) is running on the host machine at `http://localhost:12434`.*
 
 ---
 

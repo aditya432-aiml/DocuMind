@@ -95,7 +95,25 @@ Theme variables and typography (Inter, Outfit, etc.) are declared inside `src/ap
 
 ## 🏃 Running the Frontend
 
-### Local Setup
+The recommended way to run the frontend is using **Docker**. Alternatively, you can build and run it locally.
+
+### Method 1: Docker Setup (Recommended)
+
+Build and run the frontend image:
+
+```bash
+# Build the Docker image
+docker build -t documind-frontend --build-arg NEXT_PUBLIC_API_URL=http://localhost:8000 .
+
+# Run the container
+docker run -d -p 3000:3000 --name documind-frontend documind-frontend
+```
+
+---
+
+### Method 2: Local Setup (Alternative)
+
+To build and run locally, make sure you have Node.js 18+ and npm installed:
 
 ```bash
 # Navigate to directory
@@ -110,15 +128,4 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) to view the application.
 
-### Docker Setup
-
-Alternatively, build and run the frontend image standalone:
-
-```bash
-# Build the Docker image
-docker build -t documind-frontend --build-arg NEXT_PUBLIC_API_URL=http://localhost:8000 .
-
-# Run the container
-docker run -d -p 3000:3000 --name documind-frontend documind-frontend
-```
 

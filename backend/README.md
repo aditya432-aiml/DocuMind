@@ -98,7 +98,25 @@ Create a `.env` file in the `backend/` folder to customize configurations:
 
 ## 🏃 Running the Backend
 
-### Local Setup
+The recommended way to run the backend is using **Docker**. Alternatively, you can build and run it locally.
+
+### Method 1: Docker Setup (Recommended)
+
+Build and run the backend image:
+
+```bash
+# Build the Docker image
+docker build -t documind-backend .
+
+# Run the container
+docker run -d -p 8000:8000 --name documind-backend documind-backend
+```
+
+---
+
+### Method 2: Local Setup (Alternative)
+
+To build and run locally, make sure you have Python 3.13+ and uv installed:
 
 ```bash
 # Navigate to the backend directory
@@ -121,15 +139,4 @@ python3 -c "from auth.database import init_db; init_db()"
 uvicorn main:app --reload --port 8000
 ```
 
-### Docker Setup
-
-Alternatively, build and run the backend image standalone:
-
-```bash
-# Build the Docker image
-docker build -t documind-backend .
-
-# Run the container
-docker run -d -p 8000:8000 --name documind-backend documind-backend
-```
 
