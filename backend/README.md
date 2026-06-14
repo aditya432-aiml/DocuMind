@@ -1,13 +1,13 @@
 # DocuMind Python Backend API
 
-A secure FastAPI backend service that manages user registration/login, validates and processes PDF uploads via an Unstructured parsing pipeline, generates vector embeddings, and performs isolated semantic queries in ChromaDB.
+A secure FastAPI backend service that manages user registration/login, validates and processes PDF uploads via an Unstructured layout-aware parsing pipeline, generates vector embeddings, and performs isolated semantic queries in ChromaDB.
 
 ---
 
 ## 🛠️ Tech Stack & Libraries
 
 - **Framework**: FastAPI (ASGI)
-- **PDF Partitioning**: `unstructured[pdf]` (uses layout-aware `hi_res` partitioning and fallback strategies)
+- **PDF Partitioning**: `unstructured[pdf]` (uses layout-aware `hi_res` partitioning and fallback to `fast` strategies)
 - **Vector Embeddings**: `sentence-transformers` (`all-MiniLM-L6-v2`)
 - **Vector Database**: `chromadb` (persistent, local deployment)
 - **Authentication**: `PyJWT` (tokens) and `pwdlib[argon2]` (password hashing)
@@ -16,20 +16,26 @@ A secure FastAPI backend service that manages user registration/login, validates
 
 ---
 
-## 🔒 Security Features Implemented
+## 🔒 Security Features & Protections
 
 1. **Endpoint Authentication**:
    All core document endpoints require signature-verified JWT claims using `Depends(decode_access_token)`.
 2. **Strict File Upload Constraints**:
    - **Pre-check**: Validates the request's `Content-Length` header and immediately rejects files larger than 20MB.
-   - **Stream verification**: Reads files in 1MB chunks and tracks total written bytes, raising a `413 Payload Too Large` exception and cleaning up disk space if the limit is exceeded.
+   - **Stream Verification**: Reads files in 1MB chunks and tracks total written bytes, raising a `413 Payload Too Large` exception and cleaning up disk space if the limit is exceeded.
    - **Format Spoofing Defense**: Inspects the `Content-Type` header (must be `application/pdf`) and parses the first 4 magic bytes of the file stream to ensure they match the PDF signature `b"%PDF"`.
 3. **User Document Isolation**:
    - The user's ID (`sub` claim) is stored within the metadata dictionary of every indexed text chunk.
-   - All check, query, and deletion requests filter chunks using ChromaDB's logical query operators to isolate user files completely.
-4. **Lightweight Rate Limiting**:
+   - All check, query, and deletion requests filter chunks using ChromaDB's logical query operators (`$and`) to isolate user files completely.
+4. **Vector Database Pollution Prevention**:
+   - Chunks are stripped and checked. Empty or whitespace-only PDF text blocks are discarded before passing to the embedding model to preserve resources.
+5. **Disk Space Exhaustion Prevention**:
+   - In `/api/upload`, the uploaded temporary PDF file is tracked and guaranteed to be deleted in a `finally` block, ensuring no disk space is leaked regardless of success or failure.
+6. **Graceful Error Containment**:
+   - Low-level LLM and database connection errors are swallowed and mapped to clean, user-friendly `502 Bad Gateway` or `500 Internal Server Error` responses, preventing internal traceback leakage.
+7. **Endpoint Rate Limiting**:
    - Simple IP-based in-memory rate limiter protecting crucial endpoints from spamming and brute-forcing (e.g. signup, login, upload, query).
-5. **Thread-Safe State Scoping**:
+8. **Thread-Safe State Scoping**:
    - Moved heavy model loading (`SentenceTransformer`) and database connections to the FastAPI lifespan startup context. State references are stored on the thread-safe `app.state` and injected into routers via FastAPI `Depends`.
 
 ---
@@ -41,6 +47,7 @@ backend/
 ├── main.py                # Server entry point & lifespan startup hooks
 ├── pyproject.toml         # Dependencies and python version requirements
 ├── uv.lock                # Locked python dependencies
+├── .env                   # Configuration variables (ignored by git)
 │
 ├── auth/
 │   ├── database.py        # SQLite connection builder & tables initialization
@@ -52,7 +59,7 @@ backend/
 │   └── document.py        # PDF parser, ChromaDB, and query LLM endpoint
 │
 ├── uploads/               # Temporary uploads folder (auto-cleaned)
-└── chroma_db/             # Local database for ChromaDB vector embeddings
+└── chroma_db/             # Local database for ChromaDB vector embeddings (ignored by git)
 ```
 
 ---
@@ -91,7 +98,10 @@ Create a `.env` file in the `backend/` folder to customize configurations:
 ## 🏃 Running the Backend
 
 ```bash
-# Install uv
+# Navigate to the backend directory
+cd backend
+
+# Install uv if not installed
 pip install uv
 
 # Install python and activate environment
@@ -101,9 +111,9 @@ source .venv/bin/activate
 # Sync dependencies
 uv sync
 
-# Run database setup
+# Run database setup to initialize schema
 python3 -c "from auth.database import init_db; init_db()"
 
-# Start development server
+# Start the uvicorn development server
 uvicorn main:app --reload --port 8000
 ```

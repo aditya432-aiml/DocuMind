@@ -1,14 +1,52 @@
-# DocuMind 🧠 — Intelligent Multi-PDF Document Q&A Platform
+# DocuMind 🧠 — Secure, Multi-User Intelligent PDF Q&A Platform
 
-DocuMind is an AI-powered document intelligence platform that allows users to create accounts, securely upload PDF documents, and perform context-aware semantic searches and Q&A queries. 
+DocuMind is a state-of-the-art, AI-powered document intelligence platform designed to let users create secure accounts, upload PDF documents, and query them using context-aware semantic Q&A. 
 
-The application utilizes a layout-aware PDF parsing pipeline, generates dense vector embeddings, stores them in an isolated persistent database per user, and leverages a local LLM or OpenAI-compatible completion engine to answer questions strictly from the uploaded document context.
+The system leverages a layout-aware PDF parsing pipeline, generates dense vector embeddings, isolates document embeddings by user ID, and interfaces with a local LLM or OpenAI-compatible inference engine to guarantee that answers are drawn strictly and safely from the uploaded context.
 
 ---
 
-## 🚀 Quick Start (Run the Entire Project)
+## 🔒 Key Security & Architectural Features
 
-To run the application locally, you will start the **FastAPI Backend** and the **Next.js Frontend**.
+DocuMind is engineered from the ground up to prevent common LLM-app vulnerabilities, offering:
+- **Strict Endpoint Authentication**: All core PDF upload and query endpoints are protected by signature-verified JWT access tokens.
+- **Payload & Spoofing Defense**: Uploads are restricted to a hard **20MB limit** using streaming size counters. Files are checked for both `application/pdf` MIME type and `%PDF` magic bytes.
+- **Complete User Isolation**: Uploaded documents and vectors are tagged with the owner's user ID. Logical query filters guarantee that users can only query, list, or access their own documents.
+- **Thread-Safe Model Operations**: Heavy machine learning models (e.g. SentenceTransformer) and persistent clients are managed safely within the FastAPI lifespan startup context to avoid thread contention.
+- **Session Continuity (Silent Token Refresh)**: The React client continuously evaluates token expiration and silently fetches renewed tokens from the backend before expiry, ensuring a seamless user experience.
+- **Custom Markdown & HTML UI Rendering**: A custom, safe HTML/Markdown rendering engine handles complex LLM outputs (like markdown/HTML tables, lists, and formatted text) securely on the UI.
+
+---
+
+## 🛠️ Architecture & Data Flow
+
+```
+   ┌──────────────────────────────────────────────────────────┐
+   │                     Next.js Frontend                     │
+   │            (React 19, TypeScript, Vanilla CSS)           │
+   └────────────────────────────┬─────────────────────────────┘
+                                │
+                        REST API (JWT Auth)
+                                │
+   ┌────────────────────────────▼─────────────────────────────┐
+   │                     FastAPI Backend                      │
+   │  (Lifespan State, In-Memory Rate Limiting, PDF Parsing)  │
+   └───────┬──────────────────────────────────────────┬───────┘
+            │                                          │
+   ┌───────▼────────────────┐                  ┌───────▼───────┐
+   │   SQLite (Auth DB)     │                  │   ChromaDB    │
+   │  (User Records & Safe  │                  │ (User-Isolated│
+   │   Argon2 Password pH)  │                  │  Embeddings)  │
+   └────────────────────────┘                  └───────────────┘
+```
+
+- **Frontend**: [Next.js 15](file:///Users/adityabhagwat/Projects/DocuMind/frontend) (App Router), React 19, TypeScript, Vanilla CSS design tokens.
+- **Backend**: [FastAPI](file:///Users/adityabhagwat/Projects/DocuMind/backend), SentenceTransformers (`all-MiniLM-L6-v2`), Unstructured (`partition_pdf` & `chunk_by_title`), PyJWT, and pwdlib (Argon2 hashes).
+- **Databases**: SQLite (credentials storage) and ChromaDB (persistent vector embeddings).
+
+---
+
+## 🚀 Quick Start (Running the Entire Project)
 
 ### Prerequisites
 1. **Python 3.13+** (managed with [uv](https://github.com/astral-sh/uv) or pip)
@@ -16,81 +54,63 @@ To run the application locally, you will start the **FastAPI Backend** and the *
 3. **Tesseract OCR** (optional, recommended for scanned/image-based PDFs)
    - *macOS*: `brew install tesseract`
    - *Ubuntu*: `sudo apt-get install tesseract-ocr`
+4. **Local LLM Runner**: Make sure your local engine (e.g., LocalAI or Ollama) is running at `http://localhost:12434/engines/v1` with the model `ai/ministral3:3B-Q4_K_M` loaded.
 
 ---
 
 ### Step 1: Start the Backend Server
 
-Navigate to the `backend/` directory, set up the environment, and launch the API server:
+1. Navigate to the `backend/` directory:
+   ```bash
+   cd backend
+   ```
 
-```bash
-cd backend
+2. Set up the Python virtual environment and install dependencies:
+   ```bash
+   # Install 'uv' if not already installed
+   pip install uv
 
-# 1. Install 'uv' if not already installed
-pip install uv
+   # Create virtual environment & sync dependencies
+   uv venv --python 3.13
+   source .venv/bin/activate  # Windows: .venv\Scripts\activate
+   uv sync
+   ```
 
-# 2. Create virtual environment & sync dependencies
-uv venv --python 3.13
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
-uv sync
+3. Initialize the SQLite user database and start the API development server:
+   ```bash
+   # Create database tables
+   python3 -c "from auth.database import init_db; init_db()"
 
-# 3. Initialize SQLite Database & start dev server
-python3 -c "from auth.database import init_db; init_db()"
-uvicorn main:app --reload --port 8000
-```
+   # Launch the FastAPI app
+   uvicorn main:app --reload --port 8000
+   ```
 
-The backend API will be running at [http://localhost:8000](http://localhost:8000).
+The backend API will run at [http://localhost:8000](http://localhost:8000).
 
 ---
 
 ### Step 2: Start the Frontend Application
 
-Open a new terminal window, navigate to the `frontend/` directory, and run the Next.js development server:
+1. Open a new terminal window and navigate to the `frontend/` directory:
+   ```bash
+   cd frontend
+   ```
 
-```bash
-cd frontend
+2. Install the frontend dependencies and run the Next.js development server:
+   ```bash
+   # Install Node packages
+   npm install
 
-# 1. Install dependencies
-npm install
+   # Start dev server
+   npm run dev
+   ```
 
-# 2. Run the Next.js development server
-npm run dev
-```
-
-The frontend web app will be running at [http://localhost:3000](http://localhost:3000).
-
----
-
-## 🛠️ Architecture & Tech Stack
-
-```
-   ┌──────────────────────────────────────────────────────────┐
-   │                     Next.js Frontend                     │
-   │            (TypeScript, CSS Custom Variables)            │
-   └────────────────────────────┬─────────────────────────────┘
-                                │
-                        REST API (JWT Auth)
-                                │
-   ┌────────────────────────────▼─────────────────────────────┐
-   │                     FastAPI Backend                      │
-   │    (lifespan state management, in-memory rate limiting)  │
-   └───────┬──────────────────────────────────────────┬───────┘
-           │                                          │
-   ┌───────▼────────────────┐                  ┌───────▼───────┐
-   │        SQLite          │                  │   ChromaDB    │
-   │  (User Registration &  │                  │ (User-Isolated│
-   │   Hashed Credentials)  │                  │  Embeddings)  │
-   └────────────────────────┘                  └───────────────┘
-```
-
-- **Frontend**: [Next.js 15](file:///Users/adityabhagwat/Projects/DocuMind/frontend) (App Router), React 19, TypeScript, Vanilla CSS design tokens.
-- **Backend**: [FastAPI](file:///Users/adityabhagwat/Projects/DocuMind/backend), sentence-transformers (`all-MiniLM-L6-v2`), unstructured (`partition_pdf` & `chunk_by_title`), PyJWT, and pwdlib (Argon2 hashes).
-- **Databases**: SQLite (User Auth Store) and ChromaDB (Vector Store).
+The frontend application will be running at [http://localhost:3000](http://localhost:3000).
 
 ---
 
-## 📖 Sub-Project Documentation
+## 📖 Detailed Guides
 
-For specific setup, parameters, and architectural guides, see:
-- 🐍 **[Backend README](file:///Users/adityabhagwat/Projects/DocuMind/backend/README.md)**: Python pipeline, API endpoints, thread safety models, rate limiting, and magic-byte security checks.
-- ⚛️ **[Frontend README](file:///Users/adityabhagwat/Projects/DocuMind/frontend/README.md)**: React components, state variables, design customization, and silent token refresh/renewal mechanics.
+For specific setup configurations, environment variables, and inner workings:
+- 🐍 **[Backend Documentation](file:///Users/adityabhagwat/Projects/DocuMind/backend/README.md)**: Details on the parsing pipeline, secure endpoints, rate limits, and SQLite/ChromaDB models.
+- ⚛️ **[Frontend Documentation](file:///Users/adityabhagwat/Projects/DocuMind/frontend/README.md)**: Details on components, silent renewal loop, custom markdown renderer, and styling tokens.

@@ -1,6 +1,6 @@
 # DocuMind Next.js Frontend Application
 
-The Next.js 15 frontend client for DocuMind. It features a modern, responsive user interface with real-time progress steps for PDF parsing, chat session management, markdown parsing for LLM answers, and dark/light theme options.
+The Next.js 15 frontend client for DocuMind. It features a modern, responsive user interface with real-time progress steps for PDF parsing, chat session management, custom markdown formatting, and dark/light theme options.
 
 ---
 
@@ -14,6 +14,18 @@ The Next.js 15 frontend client for DocuMind. It features a modern, responsive us
 
 ---
 
+## 💬 Advanced Chat Markdown & HTML Rendering
+
+The client UI includes a custom, lightweight rendering parser (`renderText` in `ChatApp.tsx`) to process assistant responses securely. It formats the following styles dynamically:
+
+- **Markdown Tables**: Converts standard pipe-and-dashes table syntax (e.g., `| Role | Org | Duration |`) into responsive, styled HTML `<table>` grids.
+- **Raw HTML Whitelist**: Detects and parses raw HTML tags from a safe whitelist (such as `<table>`, `<tr>`, `<td>`, `<th>`, `<ul>`, `<ol>`, `<li>`, `<p>`) when sent by the LLM, rendering tables and list structures natively.
+- **List Iteration**: Detects numbered list lines (`1.`) and bullets (`-`, `*`, `•`), formatting them into clean, aligned block elements.
+- **Bold & Italics**: Detects double-asterisk structures (`**bold**`) and single-asterisk structures (`*italics*`) and maps them to standard `<strong>` and `<em>` elements.
+- **Headers & Horizontal Rules**: Automatically converts headers (`###`, `####`) and line separations (`---`) into formatted titles and `<hr>` dividers.
+
+---
+
 ## 🔒 Authentication State & Silent Renewal
 
 1. **State Persistence**:
@@ -23,6 +35,7 @@ The Next.js 15 frontend client for DocuMind. It features a modern, responsive us
 3. **Silent Session Extension (Token Renewal)**:
    - A periodic check (every 10 seconds) runs in [page.tsx](file:///Users/adityabhagwat/Projects/DocuMind/frontend/src/app/page.tsx) to analyze the current token expiration.
    - If the active token is detected to expire in less than 10 minutes, the client silently requests a refreshed token from the backend `POST /auth/refresh` endpoint and updates local storage automatically. This keeps active users logged in indefinitely.
+   - If the refresh token request fails (e.g. user was deleted or secret changed), the user is gracefully signed out with a helpful expiry notice.
 
 ---
 
@@ -38,7 +51,7 @@ frontend/
 └── src/
     ├── app/
     │   ├── layout.tsx     # Application root layout + context providers
-    │   ├── page.tsx       # Landing page / active workspace toggle
+    │   ├── page.tsx       # Landing page / active workspace toggle & session refresh loop
     │   ├── globals.css    # Typography, design tokens & UI components
     │   ├── login/         # Independent /login fallback route
     │   ├── signup/        # Independent /signup fallback route
@@ -64,7 +77,7 @@ frontend/
 
 ## 🎨 Customizing Design & Tokens
 
-Theme variables and typography (inter, outfit, etc.) are declared inside `src/app/globals.css`. You can change the primary color and other UI metrics by adjusting variables inside theme rules:
+Theme variables and typography (Inter, Outfit, etc.) are declared inside `src/app/globals.css`. You can change the primary color and other UI metrics by adjusting variables inside theme rules:
 
 ```css
 [data-theme="dark"] {
