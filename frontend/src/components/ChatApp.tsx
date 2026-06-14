@@ -453,7 +453,8 @@ export function ChatApp({ user }: ChatAppProps) {
             .replace(/>/g, '&gt;')
             .replace(/"/g, '&quot;')
             .replace(/'/g, '&#039;')
-            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>'),
+            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+            .replace(/\*(.*?)\*/g, '<em>$1</em>'),
         )
 
         if (!inTable) {
@@ -486,6 +487,7 @@ export function ChatApp({ user }: ChatAppProps) {
           .replace(/"/g, '&quot;')
           .replace(/'/g, '&#039;')
           .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+          .replace(/\*(.*?)\*/g, '<em>$1</em>')
         html += `<h${level} class="ai-header">${body}</h${level}>`
         continue
       }
@@ -500,6 +502,7 @@ export function ChatApp({ user }: ChatAppProps) {
           .replace(/"/g, '&quot;')
           .replace(/'/g, '&#039;')
           .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+          .replace(/\*(.*?)\*/g, '<em>$1</em>')
         html += `<div class="ai-list-item"><span class="ai-list-num">${numListMatch[1]}.</span><span>${body}</span></div>`
         continue
       }
@@ -514,6 +517,7 @@ export function ChatApp({ user }: ChatAppProps) {
           .replace(/"/g, '&quot;')
           .replace(/'/g, '&#039;')
           .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+          .replace(/\*(.*?)\*/g, '<em>$1</em>')
         html += `<div class="ai-list-item"><span class="ai-list-bullet">•</span><span>${body}</span></div>`
         continue
       }
@@ -531,7 +535,9 @@ export function ChatApp({ user }: ChatAppProps) {
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#039;')
-      const formattedLine = escapedLine.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+      const formattedLine = escapedLine
+        .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+        .replace(/\*(.*?)\*/g, '<em>$1</em>')
       html += `<div class="ai-paragraph">${formattedLine}</div>`
     }
 
