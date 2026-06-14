@@ -1,0 +1,22 @@
+# Dependency and Build folders
+node_modules/
+.next/
+out/
+build/
+.venv/
+venv/
+ENV/
+env/
+__pycache__/
+*.pyc
+
+# Local Databases and Storage
+backend/auth/auth.db
+backend/chroma_db/
+backend/uploads/
+
+# Env Files
+.env*
+.DS_Store
+*.pem
+*.tsbuildinfo

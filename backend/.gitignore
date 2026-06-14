@@ -1,0 +1,20 @@
+# Python files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+.venv/
+venv/
+ENV/
+env/
+
+# Database files
+auth/auth.db
+chroma_db/
+
+# Temp upload files
+uploads/
+
+# Env file
+.env
