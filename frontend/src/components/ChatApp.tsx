@@ -433,6 +433,16 @@ export function ChatApp({ user }: ChatAppProps) {
       const line = lines[i]
       const trimmed = line.trim()
 
+      // Detect if line is a raw HTML tag from our safe whitelist (to support raw HTML responses)
+      const isRawHtmlTag = /^\s*<\/?(table|thead|tbody|tr|td|th|p|ul|ol|li|br)(?:\s+[^>]*)?>/i.test(trimmed)
+      if (isRawHtmlTag) {
+        const formattedLine = trimmed
+          .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+          .replace(/\*(.*?)\*/g, '<em>$1</em>')
+        html += formattedLine
+        continue
+      }
+
       // Detect table line (e.g. | Role | Org | Duration |)
       if (trimmed.startsWith('|') && trimmed.endsWith('|')) {
         const cells = trimmed
