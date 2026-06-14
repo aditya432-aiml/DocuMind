@@ -20,25 +20,7 @@ DocuMind is engineered from the ground up to prevent common LLM-app vulnerabilit
 
 ## 🛠️ Architecture & Data Flow
 
-```
-   ┌──────────────────────────────────────────────────────────┐
-   │                     Next.js Frontend                     │
-   │            (React 19, TypeScript, Vanilla CSS)           │
-   └────────────────────────────┬─────────────────────────────┘
-                                │
-                        REST API (JWT Auth)
-                                │
-   ┌────────────────────────────▼─────────────────────────────┐
-   │                     FastAPI Backend                      │
-   │  (Lifespan State, In-Memory Rate Limiting, PDF Parsing)  │
-   └───────┬──────────────────────────────────────────┬───────┘
-            │                                          │
-   ┌───────▼────────────────┐                  ┌───────▼───────┐
-   │   SQLite (Auth DB)     │                  │   ChromaDB    │
-   │  (User Records & Safe  │                  │ (User-Isolated│
-   │   Argon2 Password pH)  │                  │  Embeddings)  │
-   └────────────────────────┘                  └───────────────┘
-```
+![App Screenshot](documind_architecture.png)
 
 - **Frontend**: [Next.js 15](file:///Users/adityabhagwat/Projects/DocuMind/frontend) (App Router), React 19, TypeScript, Vanilla CSS design tokens.
 - **Backend**: [FastAPI](file:///Users/adityabhagwat/Projects/DocuMind/backend), SentenceTransformers (`all-MiniLM-L6-v2`), Unstructured (`partition_pdf` & `chunk_by_title`), PyJWT, and pwdlib (Argon2 hashes).
