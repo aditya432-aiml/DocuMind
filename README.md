@@ -109,6 +109,23 @@ The frontend application will be running at [http://localhost:3000](http://local
 
 ---
 
+### Alternative: Run with Docker Compose 🐳
+
+If you prefer to run both the frontend and backend using Docker (without needing to set up Python and Node environments manually), you can run:
+
+```bash
+docker compose up --build
+```
+
+This will automatically:
+1. Build the FastAPI Python container (running on port `8000`).
+2. Build the Next.js frontend container (running on port `3000`).
+3. Set up persistent Docker volumes for the SQLite user auth database, ChromaDB vector database, and temporary upload folder to ensure data is not lost on restart.
+
+*Note: Ensure your local LLM engine (e.g., Ollama or LocalAI) is running on the host machine at `http://localhost:12434`.*
+
+---
+
 ## 📖 Detailed Guides
 
 For specific setup configurations, environment variables, and inner workings:

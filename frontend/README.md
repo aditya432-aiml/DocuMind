@@ -95,6 +95,8 @@ Theme variables and typography (Inter, Outfit, etc.) are declared inside `src/ap
 
 ## 🏃 Running the Frontend
 
+### Local Setup
+
 ```bash
 # Navigate to directory
 cd frontend
@@ -107,3 +109,16 @@ npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000) to view the application.
+
+### Docker Setup
+
+Alternatively, build and run the frontend image standalone:
+
+```bash
+# Build the Docker image
+docker build -t documind-frontend --build-arg NEXT_PUBLIC_API_URL=http://localhost:8000 .
+
+# Run the container
+docker run -d -p 3000:3000 --name documind-frontend documind-frontend
+```
+

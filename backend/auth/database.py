@@ -1,7 +1,13 @@
+import os
 import sqlite3
 from pathlib import Path
 
-DB_PATH = Path(__file__).resolve().parent / "auth.db"
+# Configurable SQLite database path
+AUTH_DB_PATH_ENV = os.getenv("AUTH_DB_PATH")
+if AUTH_DB_PATH_ENV:
+    DB_PATH = Path(AUTH_DB_PATH_ENV)
+else:
+    DB_PATH = Path(__file__).resolve().parent / "auth.db"
 
 
 def get_connection() -> sqlite3.Connection:
@@ -11,6 +17,8 @@ def get_connection() -> sqlite3.Connection:
 
 
 def init_db() -> None:
+    # Ensure parent directory of database exists
+    DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     with get_connection() as connection:
         connection.execute(
             """
@@ -23,3 +31,4 @@ def init_db() -> None:
             )
             """
         )
+

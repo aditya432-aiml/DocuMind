@@ -92,10 +92,13 @@ Create a `.env` file in the `backend/` folder to customize configurations:
 | `ACCESS_TOKEN_EXPIRE_MINUTES` | `60` | Token expiration duration |
 | `CHROMA_DB_PATH` | `<backend>/chroma_db` | Persistent folder path for ChromaDB files |
 | `UPLOAD_DIR` | `<backend>/uploads` | Target directory for temporary PDF files |
+| `AUTH_DB_PATH` | `<backend>/auth/auth.db` | Custom path to the SQLite credentials database |
 
 ---
 
 ## 🏃 Running the Backend
+
+### Local Setup
 
 ```bash
 # Navigate to the backend directory
@@ -117,3 +120,16 @@ python3 -c "from auth.database import init_db; init_db()"
 # Start the uvicorn development server
 uvicorn main:app --reload --port 8000
 ```
+
+### Docker Setup
+
+Alternatively, build and run the backend image standalone:
+
+```bash
+# Build the Docker image
+docker build -t documind-backend .
+
+# Run the container
+docker run -d -p 8000:8000 --name documind-backend documind-backend
+```
+
